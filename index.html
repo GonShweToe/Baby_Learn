@@ -1,0 +1,109 @@
+import React, { useEffect, useState } from "react";
+
+const DATA = [
+  { letter: "A", word: "Apple", icon: "🍎" },
+  { letter: "B", word: "Banana", icon: "🍌" },
+  { letter: "C", word: "Cat", icon: "🐱" },
+  { letter: "D", word: "Dog", icon: "🐶" },
+  { letter: "E", word: "Elephant", icon: "🐘" },
+];
+
+export default function KidsEnglishUpgrade() {
+  const [target, setTarget] = useState(null);
+  const [options, setOptions] = useState([]);
+  const [level, setLevel] = useState(1);
+  const [star, setStar] = useState(0);
+  const [feedback, setFeedback] = useState("");
+
+  /* 🔊 Auto Speech Function */
+  const speak = (text) => {
+    window.speechSynthesis.cancel();
+    const msg = new SpeechSynthesisUtterance(text);
+    msg.lang = "en-US";
+    msg.rate = 0.7;
+    msg.pitch = 1.2;
+    window.speechSynthesis.speak(msg);
+  };
+
+  const next = () => {
+    const t = DATA[Math.floor(Math.random() * DATA.length)];
+    const shuffled = [...DATA].sort(() => 0.5 - Math.random());
+
+    setTarget(t);
+    setOptions(shuffled.slice(0, 3));
+    setFeedback("");
+
+    // 🔊 Auto speak by level
+    if (level === 1) speak(t.letter);
+    if (level === 2) speak(`${t.letter}. ${t.word}`);
+    if (level === 3) speak(t.word);
+  };
+
+  useEffect(() => {
+    next();
+  }, [level]);
+
+  const choose = (item) => {
+    if (item.letter === target.letter) {
+      setFeedback("Good job! 🌟");
+      speak(item.word);
+      setStar(s => s + 1);
+
+      setTimeout(() => {
+        if (star + 1 === 5) {
+          setLevel(l => Math.min(l + 1, 3));
+          setStar(0);
+        }
+        next();
+      }, 1500);
+    } else {
+      setFeedback("Try again 😊");
+      speak("Try again");
+    }
+  };
+
+  if (!target) return null;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-yellow-100 to-blue-100 flex flex-col items-center justify-center p-4 select-none">
+
+      {/* Top Bar */}
+      <div className="flex justify-between w-full max-w-md text-xl font-bold mb-4">
+        <div>⭐ {star}</div>
+        <div>Level {level}</div>
+      </div>
+
+      {/* Letter Area */}
+      <div
+        onClick={() => speak(level === 3 ? target.word : target.letter)}
+        className="text-8xl font-extrabold bg-white w-48 h-48 flex items-center justify-center rounded-full shadow-lg mb-6 active:scale-95"
+      >
+        {target.letter}
+      </div>
+
+      <p className="text-xl mb-4 italic">
+        Touch the correct picture 👆
+      </p>
+
+      {/* Options */}
+      <div className="grid gap-4 w-full max-w-sm">
+        {options.map((o, i) => (
+          <button
+            key={i}
+            onClick={() => choose(o)}
+            className="flex items-center justify-between p-4 bg-white rounded-2xl shadow-md active:scale-95"
+          >
+            <span className="text-5xl">{o.icon}</span>
+            <span className="text-2xl font-bold">{o.word}</span>
+          </button>
+        ))}
+      </div>
+
+      {feedback && (
+        <div className="mt-6 text-2xl font-bold text-green-600 animate-bounce">
+          {feedback}
+        </div>
+      )}
+    </div>
+  );
+}
